@@ -4,7 +4,7 @@ from io import StringIO
 import pandas as pd
 import streamlit as st
 import sys
-sys.path.append('/opt/miniconda3/envs/dataScience/lib/python3.9/site-packages') 
+# sys.path.append('/opt/miniconda3/envs/dataScience/lib/python3.9/site-packages') 
 from dotenv import load_dotenv
 from utils.jagath import Clean,ScoreDistribution
 from utils.b2 import B2
@@ -15,7 +15,8 @@ from utils.jagath import PCA_PAIRWISE, FilteredData
 # ------------------------------------------------------
 #                      APP CONSTANTS
 # ------------------------------------------------------
-PICKLE_REMOTE_DATA = "10k_data.pickle"
+
+BB_NAME = 'apartments_for_rent_classified_10K.csv'
 
 # ------------------------------------------------------
 #                        CONFIG
@@ -37,45 +38,14 @@ def get_data(NAME):
     df_apartments = b2.get_df(NAME)
     return df_apartments
 
-@st.cache_resource
-def get_model(NAME):
-    # collect data frame of reviews and their sentiment
-    b2.set_bucket(os.environ['B2_BUCKETNAME'])
-    model = b2.get_model(NAME)
-    return model
 
-@st.cache_resource
-def get_pickle_model():
-    with open('./random_forest_model_final.pkl', 'rb') as f:
-        analyzer = pickle.load(f)
-    
-    return analyzer
-sqft_model = get_pickle_model()
 # ------------------------------------------------------
 #                         APP BACKBLAZE
 # ------------------------------------------------------
 
-df_apartments = get_data(PICKLE_REMOTE_DATA)
-df_price_prediction = get_data(PREDICTED_PRICES)
+df_apartments = get_data(BB_NAME)
 
-# ------------------------------------------------------
-#                         APP LOCAL
-# ------------------------------------------------------
-def get_data_local(pickle_file_path):
-    try:
-        with open(pickle_file_path, 'rb') as file:
-            data = pickle.load(file)
-        if isinstance(data, pd.DataFrame):
-            return data
-        else:
-            raise ValueError("The loaded pickle file does not contain a Pandas DataFrame.")
-    except Exception as e:
-        print(f"An error occurred while loading the pickle file: {e}")
-        return None
-#df_apartments = get_data_local(PICKLE_REMOTE_DATA)
-#df_price_prediction = get_data_local(PREDICTED_PRICES)
 
-# Load the model from the ZIP file
 
 # ------------------------------
 # PART 1 : Filter Data

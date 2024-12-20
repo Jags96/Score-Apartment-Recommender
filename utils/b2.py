@@ -1,90 +1,80 @@
-import mimetypes 
-
 import pandas as pd
 import boto3
 from botocore.config import Config
-import chardet
 from io import BytesIO
+import chardet
 
 
-class B2(object):
+def detect_encoding(content):
+    result = chardet.detect(content)
+    return result['encoding']
+
+
+class B2:
     def __init__(self, endpoint, key_id, secret_key):
         """
-        Set up a connection between the current instance and Backblaze.
+        Set up a connection to the Backblaze S3 bucket.
 
         Parameters
         ----------
         endpoint : str
-            The endpoint, usually starting with "https://s3. ..."
+            The endpoint URL, typically starting with "https://s3. ...".
         key_id : str
-            The "Key ID" for the application key from Backblaze.
+            The application key ID for Backblaze.
         secret_key : str
-            The Key secret, or "Key" for the Backblaze app key itself.
+            The application key secret for Backblaze.
         """
-        # Return a boto3 resource object for B2 service
-        self.b2 = boto3.resource(service_name='s3',
-                                endpoint_url=endpoint,
-                                aws_access_key_id=key_id,
-                                aws_secret_access_key=secret_key,
-                                config=Config(signature_version='s3v4'))
-        
+        self.b2 = boto3.resource(
+            service_name='s3',
+            endpoint_url=endpoint,
+            aws_access_key_id=key_id,
+            aws_secret_access_key=secret_key,
+            config=Config(signature_version='s3v4')
+        )
+
     def set_bucket(self, bucket_name):
         """
-        Select a bucket accessible by the chosen app key.
+        Select a bucket for operations.
 
         Parameters
         ----------
         bucket_name : str
-            Name of Bucket
+            The name of the bucket.
         """
         self.bucket = self.b2.Bucket(bucket_name)
 
-    def list_files(self, verbose=False):
-        if verbose:
-            return [f.get() for f in self.bucket.objects.all()]
-        else:
-            return [f.key for f in self.bucket.objects.all()]
+    def list_files(self):
+        """
+        List all files in the bucket.
+
+        Returns
+        -------
+        list of str
+            A list of file keys.
+        """
+        return [f.key for f in self.bucket.objects.all()]
 
     def get_df(self, remote_path):
-        # Get file
+        """
+        Retrieve a CSV file from the bucket and return it as a DataFrame.
+        Automatically detects the file's encoding.
+
+        Parameters
+        ----------
+        remote_path : str
+            The path to the file in the bucket.
+
+        Returns
+        -------
+        pd.DataFrame
+            The content of the CSV file as a DataFrame.
+        """
         obj = self.bucket.Object(remote_path)
-        # Get the raw content of the file
         content = obj.get()['Body'].read()
-        # Load the content as a DataFrame from the pickle file
-        df = pd.read_pickle(BytesIO(content))
-        return df
-    
-    def get_model(self, remote_path):
-       # Get file
-        obj = self.bucket.Object(remote_path)
-        # Get the raw content of the file
-        df = obj.get()['Body'].read()
-        return df
-            
-    def get_object(self, remote_path):
-        obj = self.bucket.Object(remote_path)
-        return obj.get()['Body']
 
-    def file_to_b2(self, local_path, remote_path):
-        '''
-        Send `local_path` file to `remote_path`.
-        '''
-        # Guess the type of a file based on its URL
-        mimetype, _ = mimetypes.guess_type(local_path)
+        # Detect encoding
+        encoding = detect_encoding(content)
 
-        if mimetype is None:
-            raise Exception("Failed to guess mimetype")
-        
-        if remote_path in [f.key for f in self.bucket.objects.all()]:
-            print(f'Overwriting {remote_path} ...')
-        else:
-            print(f'Uploading {remote_path} ...')
-        
-        self.bucket.upload_file(
-            Filename=local_path,
-            Key=remote_path,
-            ExtraArgs={
-                "ContentType": mimetype
-            }
-        )
-    
+        # Load CSV with the detected encoding
+        return pd.read_csv(BytesIO(content), encoding=encoding)
+

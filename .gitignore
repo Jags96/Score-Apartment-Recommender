@@ -1,0 +1,36 @@
+# Jupyter Notebook
+**.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Python
+cython_debug/
+*__pycache__/
+*.py[cod]
+
+# data
+*.zip
+*.csv
+*.txt
+*.db
+*.graphml
+# *.pickle
+
+# notebooks
+*scratch.ipynb
+# *.ipynb
+
+# OS
+**.DS_Store
+*.idea
+
+# project
+.env
+environment.yml
+
+#local data
+10k_data.pickle
+test.py
+pickle_data.py
