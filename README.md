@@ -1,5 +1,5 @@
 # Score-Apartment-Recommender
-Link to StreamLit - Group Project[https://datasciencegroup1.streamlit.app/score_based_top_apartments]
+Link to StreamLit - [Group Project](https://datasciencegroup1.streamlit.app/score_based_top_apartments)
 ### How to Use the App
 
 #### **Main Page**
